@@ -4,10 +4,10 @@ from nltk.corpus import wordnet
 from nltk import word_tokenize, pos_tag
 
 # download dependencies for the first time
-nltk.download("wordnet")
-nltk.download("averaged_perceptron_tagger")
-nltk.download("punkt")
-nltk.download("maxnet_treebank_pos_tagger")
+# nltk.download("wordnet")
+# nltk.download("averaged_perceptron_tagger")
+# nltk.download("punkt")
+# nltk.download("maxnet_treebank_pos_tagger")
 
 deleteSignal = [',', '.', ';', '&', ':', '>', "'", '`', '(', ')', '+', '!', '*', '"', '?']
 deleteSignalForInput = [',', '.', ';', '&', ':', '>', "'", '`', '+', '!', '*', '"', '?']
