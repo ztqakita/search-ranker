@@ -1,5 +1,7 @@
 # docs data
 
+.idea
+docs/
 # Mac
 **/.DS_Store
 

@@ -1,7 +1,9 @@
+# -*- encoding: utf-8 -*-
 import os
 import re
 from bs4 import BeautifulSoup
 from urllib.request import urlopen
+from xml.sax.saxutils import unescape
 from urllib.parse import urljoin
 import pickle
 
@@ -18,8 +20,9 @@ class Crawler:
         for link_base in links_base:
             try:
                 response = urlopen(link_base)
-                page_elements = BeautifulSoup(response.read(), 'html.parser')
-                a_all = page_elements.find_all('a', href=True)
+                page_elements = BeautifulSoup(response.read(), 'html5lib')
+                # a_all = page_elements.find_all('a', href=True)
+                a_all = page_elements.find_all(True, href=True)
                 for a in a_all:
                     link = a['href']
                     link = link.split('#')[0]  # remove location portion
@@ -40,30 +43,42 @@ class Crawler:
         return links
 
     def crawl(self, links, lid_base = 0):
+        cnt = 1
         for (lid, link) in enumerate(links):
             try:
                 # get article_body
                 response = urlopen(link)
-                page = BeautifulSoup(response.read(), 'html.parser')
+                page = BeautifulSoup(response.read(), 'html5lib')
                 article_body = page.find('div', class_='article-body')
-                
+
                 # get article_text
                 article_text = ""
                 for p in article_body.find_all('p', recursive=False):
                     if p.find('strong'): continue
                     p_text = p.get_text()
-                    article_text += p_text + "\n"
+                    p_clear_text = unescape(p_text)
+                    article_text += str(p_clear_text) + "\n"
+                    article_clean_text = article_text.replace(u'\xa0', " ")
+                    article_clean_text = article_clean_text.replace(u'\u3000', " ").encode()
 
-                # save article_text
-                file_path = os.path.join('docs', (str(lid_base + lid) + '.html'))
-                with open(file_path, 'w') as fp:
-                    fp.write(article_text)
-                
-                # info
-                print("Sucess on link: %s" % link)
             except:
                 # info
                 print("Error on link: %s" % link)
+
+            try:
+                # save article_text
+                file_path = os.path.join('docs', (str(lid_base + cnt) + '.html'))
+                with open(file_path, 'w') as fp:
+                    fp.write(article_clean_text)
+                    cnt += 1
+
+                # info
+                print("Sucess on link: %s" % link)
+            except:
+                # print(article_clean_text)
+                print('Second except')
+
+
 
 if __name__ == "__main__":
     crawler = Crawler()
