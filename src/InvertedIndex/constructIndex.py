@@ -19,10 +19,10 @@ def construct_index(path):
                 inverted_index[word] = word_list
             else:
                 if doc_id not in inverted_index[word]:
-                    inverted_index[word] = {doc_id: [pos]}
+                    inverted_index[word][doc_id] = [pos]
                 else:
                     inverted_index[word][doc_id].append(pos)
-        pos += 1
+            pos += 1
 
     # 给倒排索引中的词项排序
     sorted_inverted_index = sort_index(inverted_index)
@@ -38,7 +38,7 @@ def construct_index(path):
 
 
 def sort_index(index):
-    sindex = {k: index[k] for k in sorted(dict.keys())}
+    sindex = {k: index[k] for k in sorted(index.keys())}
     for stem in sindex:
         sindex[stem] = {k: sindex[stem][k] for k in sorted(sindex[stem].keys())}
     return sindex
@@ -53,3 +53,5 @@ def print_index(inverted_index):
         print(word)
         for doc in inverted_index[word]:
             print("    ", doc, " : ", inverted_index[word][doc])
+
+# construct_index("D:\D\BUPT_projects\IR\search-ranker\search-ranker\docs")

@@ -1,11 +1,11 @@
 import os
 # import .util
-import stemming
+from src.PreprocessText import stemming
 
 
 def preprocess(filename):
     print(filename)
-    with open(filename, 'r') as f:
+    with open(filename, 'r', encoding='UTF-8') as f:
         content = f.read()
         words = stemming.lemmatize_sentence(content, False)
         return words
@@ -23,5 +23,5 @@ def process_directory(path):
     return result
 
 
-if __name__ == "__main__":
-    process_directory("docs")
+# if __name__ == "__main__":
+#     process_directory("../../docs")

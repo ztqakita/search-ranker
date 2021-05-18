@@ -14,3 +14,10 @@ def get_word_list():
         word_str = f.read()
         word_list = json.JSONDecoder().decode(word_str)
         return word_list
+
+
+def get_doc_info():
+    with open(util.project_path + 'docInfo.json', 'r') as f:
+        info_str = f.read()
+        doc_info_list = json.JSONDecoder().decode(info_str)
+        return doc_info_list
