@@ -6,117 +6,128 @@ from urllib.request import urlopen
 from xml.sax.saxutils import unescape
 from urllib.parse import urljoin
 import unicodedata
-import pickle
 
+from nltk.util import clean_html
+
+import json
+def write2JSON(content, file_name):
+    file = open(file_name, 'w')
+    content_str = json.JSONEncoder().encode(content)
+    file.write(content_str)
+    file.close()
 
 class Crawler:
-    def __init__(self):
-        pass
+    def __init__(self, fid_base=0):
+        self.fid_base = fid_base
+        self.json_dict = {}
 
-    def gather_links(self, links_base, links_num=200, depth=1):
+    def gather_links(self, root_link, basic_links, links_max=200):
         links = {}  # merge replicated link
         
-        # while (len(links) < links_num):
-            # new_links_base = {}
-        for link_base in links_base:
+        for basic_link in basic_links:
+            topic = basic_link.split('/')[-1]
             try:
-                response = urlopen(link_base)
-                page_elements = BeautifulSoup(response.read(), 'html5lib')
-                # a_all = page_elements.find_all('a', href=True)
-                a_all = page_elements.find_all(True, href=True)
-                # page_elements = BeautifulSoup(response.read(), 'lxml')
-                # a_all = page_elements.find_all('a', href=True)
-                for a in a_all:
-                    link = a['href']
+                response = urlopen(basic_link)
+                page = BeautifulSoup(response.read(), 'html5lib')
+                # page = BeautifulSoup(response.read(), 'lxml')
+                href_elements = page.find_all(True, href=True)
+                for href_element in href_elements:
+                    link = href_element['href']
+                    # print('Pre: ' + link)
                     link = link.split('#')[0]  # remove location portion
 
-                    prefix = 'https://www.fox'
-                    if re.match(prefix, link):
-                        link_parts = link.split('/')
-                        if (len(link_parts) > 4 and link_parts[3] != "category"):
-                            if len(link_parts[-1]) > 15:
-                                links[link] = 1
-                            # else:
-                            #     new_links_base[link] = 1
-                print('Sucess on solving: %s' % link_base)
+                    if re.match('/' + topic, link):
+                        link = root_link + link
+
+                    if re.match(root_link + '/' + topic + '/', link):
+                        # print('In: ' + link)
+                        links[link] = 1
+                print('Sucess on solving. [link: %s]' % basic_link)
             except:
-                print('Error on solving: %s' % link_base)
-            # links_base = new_links_base
+                print('Error on solving. [link: %s]' % basic_link)
 
         return links
 
-    def crawl(self, links, lid_base = 0):
-        cnt = 1
-        for (lid, link) in enumerate(links):
+    def clean_text(self, text):
+        text = unescape(text)
+        text = unicodedata.normalize('NFKC', text)
+        return text
+
+    def crawl(self, links):
+        link_dict = {}
+
+        article_description = {}
+        f_cnt = 1
+        for link in links:
+            # fetch article
             try:
-                # get article_body
                 response = urlopen(link)
                 page = BeautifulSoup(response.read(), 'html5lib')
+
+                article_description_str = page.find('script', type='application/ld+json').get_text()
+                article_description = json.loads(article_description_str)
+
+                # get article_body
                 article_body = page.find('div', class_='article-body')
-
                 # get article_text
-                article_text = ""
+                article_text = ''
                 for p in article_body.find_all('p', recursive=False):
-                    if p.find('strong'): continue
-                    p_text = p.get_text()
-                    p_clear_text = unescape(p_text)
-                    article_text += str(p_clear_text) + "\n"
-                    article_clean_text = unicodedata.normalize('NFKC', article_text)
-                    # article_clean_text = article_text.replace('\xa0', " ")
-                    # print(article_clean_text[:10])
-                    # article_clean_text = article_clean_text.replace('\u3000', " ").encode()
-                    # print(article_clean_text[:10])
-
+                    if p.find('strong'): # remove image portion
+                        continue
+                    p_text = self.clean_text(p.get_text())
+                    article_text += str(p_text) + '\n'
+                # print('Success on article fetch. [link: %s]' % link)
             except:
-                # info
-                print("Error on link: %s" % link)
-
+                print('Error on article fetch. [link: %s]' % link)
+                continue
+            # save article
             try:
-                # save article_text
-                file_path = os.path.join('docs', (str(lid_base + cnt) + '.html'))
-                print(file_path)
-                # print(article_clean_text[:10])
+                fid = self.fid_base + f_cnt
+                file_name = str(fid) + '.html'
+                file_path = os.path.join('.', 'docs', file_name)
+                print("Saving article to file_path '%s'" % file_path)
                 with open(file_path, 'w', encoding='UTF-8') as fp:
-                    fp.write(article_clean_text)
-                    cnt += 1
-
-                # info
-                print("Sucess on link: %s" % link)
+                    fp.write(article_text)
+                f_cnt += 1
+                # print('Success on article saving. [link: %s]' % link)
             except:
-                # print(article_clean_text)
-                print('Second except')
+                print('Error on article saving. [link: %s]' % link)
+                continue
+            
+            link_dict['topic'] = link.split('/')[3]
+            link_dict['headline'] = article_description['headline']
+            link_dict['datePublished'] = article_description['datePublished']
+            self.json_dict[fid] = link_dict
+            print('Success on crawling. [link: %s]' % link)
+        link_dict_path = os.path.join('.', 'linkInfo.json')
+        write2JSON(self.json_dict, link_dict_path)
 
+    def run(self, root_link, basic_links):
+        links = self.gather_links(root_link, basic_links)
+        print('Gathering finished.')
 
+        print('[ Number of links: ' + str(len(links)) + ' ]')
+        
+        self.crawl(links)
+        print('Crawling finished.')
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     crawler = Crawler()
-    # links_base = ['https://www.foxnews.com']
-    links_base = [
-        "https://www.foxnews.com",
-        # "https://www.foxnews.com/us",
-        # "https://www.foxnews.com/politics",
-        # "https://www.foxnews.com/media",
-        # "https://www.foxnews.com/opinion",
-        # "https://www.foxnews.com/entertainment",
-        # "https://www.foxnews.com/sports",
-        # "https://www.foxnews.com/lifestyle",
-        # "https://www.foxnews.com/shows",
-        # "https://www.foxnews.com/world",
-        # "https://www.foxnews.com/official-polls",
-        # "https://www.foxnews.com/food-drink",
-        # "https://www.foxnews.com/auto",
-        # "https://www.foxnews.com/travel",
-        # "https://www.foxnews.com/family",
-        # "https://www.foxnews.com/science",
-        # "https://www.foxnews.com/tech",
-        # "https://www.foxnews.com/health",
-        # "https://www.foxnews.com/compliance",
-        # "https://www.foxnews.com/real-estate",
-        # "https://www.foxnews.com/great-outdoors",
-        ]
-    links = crawler.gather_links(links_base)
-    for link in links:
-        print(link)
-    print('Number of links: ' + str(len(links)))
-    # links = ['https://www.foxnews.com/us/self-identified-antifa-members-arrive-in-twin-cities-area-as-brooklyn-center-protests-continue']
-    crawler.crawl(links)
+    root_link = 'https://www.foxnews.com'
+    basic_links = [
+        # 'https://www.foxnews.com/us',
+        # 'https://www.foxnews.com/politics',
+        # 'https://www.foxnews.com/entertainment',
+        # 'https://www.foxnews.com/sports',
+        # 'https://www.foxnews.com/lifestyle',
+        # 'https://www.foxnews.com/world',
+        # 'https://www.foxnews.com/food-drink',
+        # 'https://www.foxnews.com/travel',
+        # 'https://www.foxnews.com/family',
+        'https://www.foxnews.com/science',
+        # 'https://www.foxnews.com/tech',
+        # 'https://www.foxnews.com/health',
+        # 'https://www.foxnews.com/real-estate',
+        # 'https://www.foxnews.com/great-outdoors',
+    ]
+    crawler.run(root_link, basic_links)
