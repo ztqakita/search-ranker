@@ -12,7 +12,7 @@ python main.py
 ```
 
 ## Instruction:
-1. `xrawler.py`: scratch website of www.foxnews.com and get 200+ html files as a local dataset.
+1. `crawler.py`: scratch website of www.foxnews.com and get 200+ html files as a local dataset.
 2. `iat_ws_python3.py`: API for transfer .mp3 file to the content of speech.
 3. `src`: a folder containing the implement of the search-ranker algorithm. 
 
