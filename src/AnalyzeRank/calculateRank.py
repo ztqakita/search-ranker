@@ -53,6 +53,8 @@ def calculate_cos(vsm, word_vector):
         B = np.mat(word_vector)
         num = float(A * B.T)  # 若为行向量则 A * B.T
         denom = np.linalg.norm(A) * np.linalg.norm(B)
+        if denom == 0.0:
+            print(doc_id)
         cos = num / denom  # 余弦值
         sim = 0.5 + 0.5 * cos  # 归一化
         if sim > 0.5:

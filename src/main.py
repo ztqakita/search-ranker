@@ -9,10 +9,9 @@ from PreprocessText import stemming
 FILE_NUM = len(os.listdir(util.docs_path))
 
 if __name__ == "__main__":
-    # constructIndex.construct_index("D:\D\BUPT_projects\IR\search-ranker\search-ranker\docs")
+    # constructIndex.construct_index(util.docs_path)
     inverted_index = getIndex.get_index()
     word_list = getIndex.get_word_list()
-    # VSM = calculateRank.get_VSM()
     VSM = calculateRank.createVSM(inverted_index, word_list, FILE_NUM, util.docs_path)
     loop = True
 

@@ -1,20 +1,15 @@
 # -*- encoding: utf-8 -*-
-import os
-import re
 from bs4 import BeautifulSoup
 from urllib.request import urlopen
 from xml.sax.saxutils import unescape
+import src.util as util
 from urllib.parse import urljoin
-import unicodedata
-
 from nltk.util import clean_html
-
+import unicodedata
+import os
+import re
 import json
-def write2JSON(content, file_name):
-    file = open(file_name, 'w')
-    content_str = json.JSONEncoder().encode(content)
-    file.write(content_str)
-    file.close()
+
 
 class Crawler:
     def __init__(self, fid_base=0):
@@ -23,7 +18,7 @@ class Crawler:
 
     def gather_links(self, root_link, basic_links, links_max=200):
         links = {}  # merge replicated link
-        
+
         for basic_link in basic_links:
             topic = basic_link.split('/')[-1]
             try:
@@ -54,11 +49,11 @@ class Crawler:
         return text
 
     def crawl(self, links):
-        link_dict = {}
 
-        article_description = {}
         f_cnt = 1
         for link in links:
+            article_description = {}
+            link_dict = {}
             # fetch article
             try:
                 response = urlopen(link)
@@ -72,7 +67,7 @@ class Crawler:
                 # get article_text
                 article_text = ''
                 for p in article_body.find_all('p', recursive=False):
-                    if p.find('strong'): # remove image portion
+                    if p.find('strong'):  # remove image portion
                         continue
                     p_text = self.clean_text(p.get_text())
                     article_text += str(p_text) + '\n'
@@ -93,41 +88,42 @@ class Crawler:
             except:
                 print('Error on article saving. [link: %s]' % link)
                 continue
-            
+
             link_dict['topic'] = link.split('/')[3]
             link_dict['headline'] = article_description['headline']
             link_dict['datePublished'] = article_description['datePublished']
             self.json_dict[fid] = link_dict
             print('Success on crawling. [link: %s]' % link)
         link_dict_path = os.path.join('.', 'linkInfo.json')
-        write2JSON(self.json_dict, link_dict_path)
+        util.write2JSON(self.json_dict, link_dict_path)
 
     def run(self, root_link, basic_links):
         links = self.gather_links(root_link, basic_links)
         print('Gathering finished.')
 
         print('[ Number of links: ' + str(len(links)) + ' ]')
-        
+
         self.crawl(links)
         print('Crawling finished.')
+
 
 if __name__ == '__main__':
     crawler = Crawler()
     root_link = 'https://www.foxnews.com'
     basic_links = [
         # 'https://www.foxnews.com/us',
-        # 'https://www.foxnews.com/politics',
-        # 'https://www.foxnews.com/entertainment',
-        # 'https://www.foxnews.com/sports',
-        # 'https://www.foxnews.com/lifestyle',
-        # 'https://www.foxnews.com/world',
-        # 'https://www.foxnews.com/food-drink',
-        # 'https://www.foxnews.com/travel',
-        # 'https://www.foxnews.com/family',
+        'https://www.foxnews.com/politics',
+        'https://www.foxnews.com/entertainment',
+        'https://www.foxnews.com/sports',
+        'https://www.foxnews.com/lifestyle',
+        'https://www.foxnews.com/world',
+        'https://www.foxnews.com/food-drink',
+        'https://www.foxnews.com/travel',
+        'https://www.foxnews.com/family',
         'https://www.foxnews.com/science',
-        # 'https://www.foxnews.com/tech',
-        # 'https://www.foxnews.com/health',
-        # 'https://www.foxnews.com/real-estate',
-        # 'https://www.foxnews.com/great-outdoors',
+        'https://www.foxnews.com/tech',
+        'https://www.foxnews.com/health',
+        'https://www.foxnews.com/real-estate',
+        'https://www.foxnews.com/great-outdoors',
     ]
     crawler.run(root_link, basic_links)
