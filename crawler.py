@@ -71,6 +71,9 @@ class Crawler:
                         continue
                     p_text = self.clean_text(p.get_text())
                     article_text += str(p_text) + '\n'
+                if article_text == '':
+                    print('Skip empty article. [link: %s]' % link)
+                    continue
                 # print('Success on article fetch. [link: %s]' % link)
             except:
                 print('Error on article fetch. [link: %s]' % link)
@@ -92,6 +95,7 @@ class Crawler:
             link_dict['topic'] = link.split('/')[3]
             link_dict['headline'] = article_description['headline']
             link_dict['datePublished'] = article_description['datePublished']
+            link_dict['url'] = link
             self.json_dict[fid] = link_dict
             print('Success on crawling. [link: %s]' % link)
         link_dict_path = os.path.join('.', 'linkInfo.json')
