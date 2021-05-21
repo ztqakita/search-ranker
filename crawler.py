@@ -1,4 +1,4 @@
-# -*- encoding: utf-8 -*-
+# -*- encoding: utf-8
 from bs4 import BeautifulSoup
 from urllib.request import urlopen
 from xml.sax.saxutils import unescape
