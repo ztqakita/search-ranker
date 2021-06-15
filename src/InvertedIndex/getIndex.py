@@ -9,6 +9,13 @@ def get_index():
         return index
 
 
+def get_Image_Index():
+    with open(util.project_path + 'invertImageIndex.json', 'r') as f:
+        index_str = f.read()
+        index = json.JSONDecoder().decode(index_str)
+        return index
+
+
 def get_word_list():
     with open(util.project_path + 'wordList.json', 'r') as f:
         word_str = f.read()

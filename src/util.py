@@ -1,8 +1,9 @@
 import json
 import os
 
-project_path = os.getcwd()
-docs_path = project_path.replace("src", "docs")
+path = os.getcwd()
+project_path = path.replace("src", "")
+docs_path = path.replace("src", "docs")
 
 
 def get_all_doc_list():
